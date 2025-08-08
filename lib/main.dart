@@ -166,7 +166,7 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
     final typedText = _controller.text.trim().toLowerCase();
     final targetText = _currentSentence.trim().toLowerCase();
     if (typedText == targetText) {
-      _showPopup('COMPLETED');
+      _showPopup('valya karyam aay poy');
     }
   }
 
@@ -175,7 +175,7 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
     final typedText = _controller.text.trim().toLowerCase();
     final targetText = _currentSentence.trim().toLowerCase();
     if (typedText != targetText) {
-      _showPopup('INCOMPLETE');
+      _showPopup('valla panikkum poda');
     }
   }
 
@@ -203,7 +203,7 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
               ),
             ),
             SizedBox(height: 10),
-            Text('You $message the test.'),
+            Text('You have failed the test.'),
           ],
         ),
         actions: [
