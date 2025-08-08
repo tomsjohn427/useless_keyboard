@@ -1,4 +1,3 @@
-// lib/main.dart
 import 'dart:math';
 import 'package:flutter/material.dart';
 
@@ -41,19 +40,29 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
     '-','_','=','+','[',']','{','}',';','\'',':','"',',','.','/','?','\\','|','`','~'
   ];
 
+  late List<String> _letterKeys;
+  late List<String> _symbolKeys;
   List<String> _keys = [];
+  String _mode = 'letters';
   bool _caps = false;
   final Random _rand = Random();
 
   @override
   void initState() {
     super.initState();
+    _letterKeys = _baseKeys.sublist(0, 26);
+    _symbolKeys = _baseKeys.sublist(26);
     _resetKeys();
   }
 
   void _resetKeys() {
-    // Start with a shuffled copy of base keys
-    _keys = List<String>.from(_baseKeys)..shuffle(_rand);
+    setState(() {
+      if (_mode == 'letters') {
+        _keys = List<String>.from(_letterKeys)..shuffle(_rand);
+      } else {
+        _keys = List<String>.from(_symbolKeys)..shuffle(_rand);
+      }
+    });
   }
 
   void _onKeyPress(String key) {
@@ -65,45 +74,55 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
         if (text.isNotEmpty) {
           _controller.text = text.substring(0, text.length - 1);
         }
+        return; // Don't shuffle on backspace
       } else if (key == '⏎') {
         _controller.text += '\n';
       } else if (key == '⇧') {
         _caps = !_caps;
+        return; // Don't shuffle on shift
+      } else if (key == '?123') {
+        _mode = 'numbers';
+        _caps = false; // Reset caps for numbers mode
+        _resetKeys();
+        return;
+      } else if (key == 'ABC') {
+        _mode = 'letters';
+        _resetKeys();
+        return;
       } else {
-        _controller.text += _caps ? key.toUpperCase() : key;
+        _controller.text += (_caps && _mode == 'letters') ? key.toUpperCase() : key;
       }
 
-      // After every typing (except Shift toggle), shuffle keys
-      if (key != '⇧') {
-        _keys.shuffle(_rand);
-      }
+      // Shuffle after typing (except specials above)
+      _resetKeys();
 
       // Keep cursor at end
       _controller.selection = TextSelection.fromPosition(
-          TextPosition(offset: _controller.text.length));
+        TextPosition(offset: _controller.text.length),
+      );
     });
   }
 
   Widget _buildKey(String label, {double height = 48}) {
-    final displayLabel = (label == '␣' || label == '⌫' || label == '⏎' || label == '⇧')
-        ? label
-        : (_caps ? label.toUpperCase() : label);
+    String displayLabel = label;
+    if (_mode == 'letters' && _caps && label.length == 1 && label.toLowerCase() != label.toUpperCase()) {
+      displayLabel = label.toUpperCase();
+    }
 
     return Padding(
-      padding: const EdgeInsets.all(4.0),
+      padding: const EdgeInsets.all(2.0),
       child: SizedBox(
         height: height,
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
             padding: EdgeInsets.zero,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
           ),
           onPressed: () => _onKeyPress(label),
           child: Center(
             child: Text(
               displayLabel,
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
             ),
           ),
         ),
@@ -111,37 +130,53 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
     );
   }
 
-  // Build a keyboard grid using current _keys list
   Widget _buildKeyboard() {
-    // We'll show most keys in a grid, plus a bottom row for special keys
-    // Choose how many columns - responsive
-    int crossAxisCount = MediaQuery.of(context).size.width > 600 ? 12 : 8;
+    // Gboard-like row-based layout for both modes
+    List<String> row1, row2, row3;
+    String toggleKey = _mode == 'letters' ? '?123' : 'ABC';
 
-    // Make a trimmed copy so the GridView looks tidy (you can expand)
-    final visibleKeys = _keys;
+    if (_keys.length < 26) {
+      // Pad if fewer keys (unlikely)
+      _keys.addAll(List.filled(26 - _keys.length, ''));
+    }
+
+    row1 = _keys.sublist(0, 10);
+    row2 = _keys.sublist(10, 19); // 9 keys
+    row3 = _keys.sublist(19, min(26, _keys.length)); // 7 keys or remaining
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        // Grid of normal keys
-        Flexible(
-          child: GridView.count(
-            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            crossAxisCount: crossAxisCount,
-            childAspectRatio: 1.6,
-            children: visibleKeys.map((k) => _buildKey(k)).toList(),
-          ),
+        // Row 1 (10 keys)
+        Row(
+          children: row1.map((k) => Expanded(child: _buildKey(k))).toList(),
         ),
-        // Bottom special row
+        // Row 2 (9 keys, centered with padding)
+        Row(
+          children: [
+            SizedBox(width: MediaQuery.of(context).size.width / 20), // Half-key padding
+            ...row2.map((k) => Expanded(child: _buildKey(k))),
+            SizedBox(width: MediaQuery.of(context).size.width / 20),
+          ],
+        ),
+        // Row 3 (toggle + 7 keys + backspace)
+        Row(
+          children: [
+            Expanded(child: _buildKey(toggleKey)),
+            ...row3.map((k) => Expanded(child: _buildKey(k))),
+            Expanded(child: _buildKey('⌫')),
+          ],
+        ),
+        // Bottom row (shift/comma/space/period/enter, with wider space)
         Container(
           color: Colors.grey.shade200,
-          padding: EdgeInsets.symmetric(vertical: 8, horizontal: 8),
           child: Row(
             children: [
-              Expanded(flex: 2, child: _buildKey('⇧', height: 48)),
-              Expanded(flex: 6, child: _buildKey('␣', height: 48)),
-              Expanded(flex: 2, child: _buildKey('⌫', height: 48)),
-              SizedBox(width: 8),
-              Expanded(flex: 2, child: _buildKey('⏎', height: 48)),
+              Expanded(child: _buildKey('⇧')),
+              Expanded(child: _buildKey(',')),
+              Expanded(flex: 5, child: _buildKey('␣')),
+              Expanded(child: _buildKey('.')),
+              Expanded(child: _buildKey('⏎')),
             ],
           ),
         ),
@@ -149,19 +184,16 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
     );
   }
 
-  // Optional: quick toggle to switch between simple alphabet-only mode
   void _switchToAlphabetOnly() {
     setState(() {
-      _keys = List<String>.from([
-        'q','w','e','r','t','y','u','i','o','p',
-        'a','s','d','f','g','h','j','k','l',
-        'z','x','c','v','b','n','m'
-      ])..shuffle(_rand);
+      _mode = 'letters';
+      _resetKeys();
     });
   }
 
   void _switchToFullMode() {
     setState(() {
+      _mode = 'numbers';
       _resetKeys();
     });
   }
@@ -180,17 +212,16 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
         children: [
           ElevatedButton(
             onPressed: _switchToAlphabetOnly,
-            child: Text('Alphabet Only'),
+            child: Text('Letters'),
           ),
           SizedBox(width: 8),
           ElevatedButton(
             onPressed: _switchToFullMode,
-            child: Text('Full Mode'),
+            child: Text('Numbers/Symbols'),
           ),
           SizedBox(width: 8),
           ElevatedButton(
             onPressed: () {
-              // Clear text
               setState(() {
                 _controller.clear();
               });
@@ -200,7 +231,7 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
           SizedBox(width: 8),
           Text('Caps: ${_caps ? "ON" : "OFF"}'),
           Spacer(),
-          Text('Shuffle after each press ✓'),
+          Text('Mode: $_mode'),
         ],
       ),
     );
@@ -216,6 +247,7 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
       body: SafeArea(
         child: Column(
           children: [
+            // Top controls and text field stuck to the top
             _buildTopControls(),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12.0),
@@ -229,13 +261,17 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
                   border: OutlineInputBorder(),
                 ),
                 onTap: () {
-                  // keep focus to show caret
                   _focusNode.requestFocus();
                 },
               ),
             ),
-            SizedBox(height: 8),
-            Expanded(child: _buildKeyboard()),
+            // Spacer to push keyboard to the bottom
+            Expanded(child: SizedBox()),
+            // Keyboard stuck to the bottom
+            Container(
+              color: Colors.grey.shade100, // Optional background for keyboard area
+              child: _buildKeyboard(),
+            ),
           ],
         ),
       ),
