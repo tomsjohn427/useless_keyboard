@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Added for haptic feedback
+import 'package:flutter/services.dart'; // For haptic feedback
 
 void main() {
   runApp(ChaoticKeyboardApp());
@@ -49,7 +49,7 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
   bool _caps = false;
   final Random _rand = Random();
 
-  // New features: Typing test
+  // Typing test features
   final List<String> _sentences = [
     'the children laugh loudly',
     'we watch movies on Fridays',
@@ -73,9 +73,10 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
     'we go to school every day',
   ];
   String _currentSentence = '';
-  Timer? _timer;
+  Timer? _countdownTimer;
+  Timer? _displayTimer;
   bool _isTyping = false;
-  DateTime? _startTime;
+  int _remainingSeconds = 60;
 
   @override
   void initState() {
@@ -140,28 +141,71 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
       _controller.selection = TextSelection.fromPosition(
         TextPosition(offset: _controller.text.length),
       );
+
+      // Check for completion
+      _checkCompletion();
     });
   }
 
   void _startTyping() {
     _isTyping = true;
-    _startTime = DateTime.now();
-    _timer = Timer(Duration(seconds: 30), _endTest);
+    _remainingSeconds = 60;
+    _countdownTimer = Timer(Duration(minutes: 1), _endTest);
+    _displayTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {
+        if (_remainingSeconds > 0) {
+          _remainingSeconds--;
+        } else {
+          timer.cancel();
+        }
+      });
+    });
+  }
+
+  void _checkCompletion() {
+    final typedText = _controller.text.trim().toLowerCase();
+    final targetText = _currentSentence.trim().toLowerCase();
+    if (typedText == targetText) {
+      _showPopup('COMPLETED');
+    }
   }
 
   void _endTest() {
-    if (_startTime == null) return;
+    _displayTimer?.cancel();
+    final typedText = _controller.text.trim().toLowerCase();
+    final targetText = _currentSentence.trim().toLowerCase();
+    if (typedText != targetText) {
+      _showPopup('INCOMPLETE');
+    }
+  }
 
-    final elapsedMinutes = 0.5; // 30 seconds = 0.5 minutes
-    final typedText = _controller.text.trim();
-    final wordCount = typedText.isEmpty ? 0 : typedText.split(RegExp(r'\s+')).length;
-    final wpm = (wordCount / elapsedMinutes).toStringAsFixed(2);
-
+  void _showPopup(String message) {
+    _countdownTimer?.cancel();
+    _displayTimer?.cancel();
+    String imagePath = (message == 'COMPLETED') ? 'assets/completed.jpg' : 'assets/incomplete.jpg';
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Typing Test Result'),
-        content: Text('Your average WPM: $wpm'),
+        title: Text('$message!'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Display different image based on completion status
+            Image.asset(
+              imagePath,
+              width: 100,
+              height: 100,
+              errorBuilder: (context, error, stackTrace) => Container(
+                width: 100,
+                height: 100,
+                color: Colors.grey, // Fallback placeholder
+                child: Icon(Icons.image, size: 50),
+              ),
+            ),
+            SizedBox(height: 10),
+            Text('You $message the test.'),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () {
@@ -180,9 +224,11 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
       _controller.clear();
       _currentSentence = _sentences[_rand.nextInt(_sentences.length)];
       _isTyping = false;
-      _startTime = null;
-      _timer?.cancel();
-      _timer = null;
+      _remainingSeconds = 60;
+      _countdownTimer?.cancel();
+      _displayTimer?.cancel();
+      _countdownTimer = null;
+      _displayTimer = null;
     });
   }
 
@@ -285,7 +331,8 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
   void dispose() {
     _controller.dispose();
     _focusNode.dispose();
-    _timer?.cancel();
+    _countdownTimer?.cancel();
+    _displayTimer?.cancel();
     super.dispose();
   }
 
@@ -350,6 +397,13 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
               child: Text(
                 'Test Sentence: $_currentSentence',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Text(
+                'Time Remaining: $_remainingSeconds seconds',
+                style: TextStyle(fontSize: 16, color: Colors.red),
               ),
             ),
             // Spacer to push keyboard to the bottom
