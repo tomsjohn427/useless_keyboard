@@ -53,12 +53,20 @@ For Software:
 
 # Screenshots (Add at least 3)
 
+![img002](https://github.com/user-attachments/assets/e38c2b78-fded-4250-8ef9-d29c72e45eeb)
 
-![Screenshot2](Add screenshot 2 here with proper name)
-*Add caption explaining what this shows*
+ Home UI
 
-![Screenshot3](Add screenshot 3 here with proper name)
-*Add caption explaining what this shows*
+
+![img001](https://github.com/user-attachments/assets/7c9f5874-5438-4716-800a-fe539e2e712f)
+
+If you type within 60s
+
+
+ ![img003](https://github.com/user-attachments/assets/c092a304-b3f9-42af-a046-50f0306d2798)
+
+ If you dont type within 60s
+
 
 # Diagrams
 Start
@@ -88,8 +96,8 @@ Android phone/Laptops
 
 ### Project Demo
 # Video
-[Add your demo video link here]
-*Explain what the video demonstrates*
+https://drive.google.com/drive/folders/18Ni6zblJbgSYTcFuI0glSD5D4pZrkZh-?usp=share_link
+This video shows the basic running of the application on a computer.
 
 # Additional Demos
 =
