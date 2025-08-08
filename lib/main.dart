@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Added for haptic feedback
 
 void main() {
   runApp(ChaoticKeyboardApp());
@@ -109,27 +110,31 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
         if (text.isNotEmpty) {
           _controller.text = text.substring(0, text.length - 1);
         }
+        HapticFeedback.lightImpact(); // Short haptic feedback for backspace
         return; // Don't shuffle on backspace
       } else if (key == '⏎') {
         _controller.text += '\n';
       } else if (key == '⇧') {
         _caps = !_caps;
-        return; // Don't shuffle on shift
+        return; // Don't shuffle or vibrate on shift
       } else if (key == '?123') {
         _mode = 'numbers';
         _caps = false; // Reset caps for numbers mode
         _resetKeys();
-        return;
+        return; // Don't vibrate on mode toggle
       } else if (key == 'ABC') {
         _mode = 'letters';
         _resetKeys();
-        return;
+        return; // Don't vibrate on mode toggle
       } else {
         _controller.text += (_caps && _mode == 'letters') ? key.toUpperCase() : key;
       }
 
       // Shuffle after typing (except specials above)
       _resetKeys();
+
+      // Short haptic feedback for key press
+      HapticFeedback.lightImpact();
 
       // Keep cursor at end
       _controller.selection = TextSelection.fromPosition(
