@@ -1,122 +1,244 @@
+// lib/main.dart
+import 'dart:math';
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(ChaoticKeyboardApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  // This widget is the root of your application.
+class ChaoticKeyboardApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Keyboard of Chaos',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: ChaoticKeyboardDemo(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
+class ChaoticKeyboardDemo extends StatefulWidget {
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  _ChaoticKeyboardDemoState createState() => _ChaoticKeyboardDemoState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
+  final TextEditingController _controller = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
 
-  void _incrementCounter() {
+  // Base key pool (letters, digits, and some symbols)
+  List<String> _baseKeys = [
+    // letters
+    'q','w','e','r','t','y','u','i','o','p',
+    'a','s','d','f','g','h','j','k','l',
+    'z','x','c','v','b','n','m',
+    // digits
+    '0','1','2','3','4','5','6','7','8','9',
+    // symbols
+    '!','@','#','\$','%','^','&','*','(',')',
+    '-','_','=','+','[',']','{','}',';','\'',':','"',',','.','/','?','\\','|','`','~'
+  ];
+
+  List<String> _keys = [];
+  bool _caps = false;
+  final Random _rand = Random();
+
+  @override
+  void initState() {
+    super.initState();
+    _resetKeys();
+  }
+
+  void _resetKeys() {
+    // Start with a shuffled copy of base keys
+    _keys = List<String>.from(_baseKeys)..shuffle(_rand);
+  }
+
+  void _onKeyPress(String key) {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      if (key == '␣') {
+        _controller.text += ' ';
+      } else if (key == '⌫') {
+        final text = _controller.text;
+        if (text.isNotEmpty) {
+          _controller.text = text.substring(0, text.length - 1);
+        }
+      } else if (key == '⏎') {
+        _controller.text += '\n';
+      } else if (key == '⇧') {
+        _caps = !_caps;
+      } else {
+        _controller.text += _caps ? key.toUpperCase() : key;
+      }
+
+      // After every typing (except Shift toggle), shuffle keys
+      if (key != '⇧') {
+        _keys.shuffle(_rand);
+      }
+
+      // Keep cursor at end
+      _controller.selection = TextSelection.fromPosition(
+          TextPosition(offset: _controller.text.length));
+    });
+  }
+
+  Widget _buildKey(String label, {double height = 48}) {
+    final displayLabel = (label == '␣' || label == '⌫' || label == '⏎' || label == '⇧')
+        ? label
+        : (_caps ? label.toUpperCase() : label);
+
+    return Padding(
+      padding: const EdgeInsets.all(4.0),
+      child: SizedBox(
+        height: height,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            padding: EdgeInsets.zero,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+          onPressed: () => _onKeyPress(label),
+          child: Center(
+            child: Text(
+              displayLabel,
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Build a keyboard grid using current _keys list
+  Widget _buildKeyboard() {
+    // We'll show most keys in a grid, plus a bottom row for special keys
+    // Choose how many columns - responsive
+    int crossAxisCount = MediaQuery.of(context).size.width > 600 ? 12 : 8;
+
+    // Make a trimmed copy so the GridView looks tidy (you can expand)
+    final visibleKeys = _keys;
+
+    return Column(
+      children: [
+        // Grid of normal keys
+        Flexible(
+          child: GridView.count(
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            crossAxisCount: crossAxisCount,
+            childAspectRatio: 1.6,
+            children: visibleKeys.map((k) => _buildKey(k)).toList(),
+          ),
+        ),
+        // Bottom special row
+        Container(
+          color: Colors.grey.shade200,
+          padding: EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+          child: Row(
+            children: [
+              Expanded(flex: 2, child: _buildKey('⇧', height: 48)),
+              Expanded(flex: 6, child: _buildKey('␣', height: 48)),
+              Expanded(flex: 2, child: _buildKey('⌫', height: 48)),
+              SizedBox(width: 8),
+              Expanded(flex: 2, child: _buildKey('⏎', height: 48)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Optional: quick toggle to switch between simple alphabet-only mode
+  void _switchToAlphabetOnly() {
+    setState(() {
+      _keys = List<String>.from([
+        'q','w','e','r','t','y','u','i','o','p',
+        'a','s','d','f','g','h','j','k','l',
+        'z','x','c','v','b','n','m'
+      ])..shuffle(_rand);
+    });
+  }
+
+  void _switchToFullMode() {
+    setState(() {
+      _resetKeys();
     });
   }
 
   @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  Widget _buildTopControls() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10),
+      child: Row(
+        children: [
+          ElevatedButton(
+            onPressed: _switchToAlphabetOnly,
+            child: Text('Alphabet Only'),
+          ),
+          SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: _switchToFullMode,
+            child: Text('Full Mode'),
+          ),
+          SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: () {
+              // Clear text
+              setState(() {
+                _controller.clear();
+              });
+            },
+            child: Text('Clear'),
+          ),
+          SizedBox(width: 8),
+          Text('Caps: ${_caps ? "ON" : "OFF"}'),
+          Spacer(),
+          Text('Shuffle after each press ✓'),
+        ],
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: Text('Keyboard of Chaos'),
+        centerTitle: true,
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
+      body: SafeArea(
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+          children: [
+            _buildTopControls(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+              child: TextField(
+                controller: _controller,
+                focusNode: _focusNode,
+                readOnly: true, // prevent system keyboard
+                maxLines: 6,
+                decoration: InputDecoration(
+                  hintText: 'Type here using the chaotic keyboard below...',
+                  border: OutlineInputBorder(),
+                ),
+                onTap: () {
+                  // keep focus to show caret
+                  _focusNode.requestFocus();
+                },
+              ),
             ),
+            SizedBox(height: 8),
+            Expanded(child: _buildKeyboard()),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
