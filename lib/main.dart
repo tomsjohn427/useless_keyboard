@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 
@@ -47,12 +48,41 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
   bool _caps = false;
   final Random _rand = Random();
 
+  // New features: Typing test
+  final List<String> _sentences = [
+    'the children laugh loudly',
+    'we watch movies on Fridays',
+    'the sun rises in the east',
+    'he drinks milk every morning',
+    'he writes with a pen',
+    'she wears a red dress',
+    'the baby is sleeping now',
+    'birds fly in the sky',
+    'dogs are friendly animals',
+    'the stars shine at night',
+    'the fish swim in the water',
+    'it is a sunny day',
+    'I like to eat apples',
+    'the cat sat on the mat',
+    'the car moves on the road',
+    'the flowers bloom in spring',
+    'she likes to read books',
+    'they play football on weekends',
+    'he runs fast in the park',
+    'we go to school every day',
+  ];
+  String _currentSentence = '';
+  Timer? _timer;
+  bool _isTyping = false;
+  DateTime? _startTime;
+
   @override
   void initState() {
     super.initState();
     _letterKeys = _baseKeys.sublist(0, 26);
     _symbolKeys = _baseKeys.sublist(26);
     _resetKeys();
+    _resetTest();
   }
 
   void _resetKeys() {
@@ -67,6 +97,11 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
 
   void _onKeyPress(String key) {
     setState(() {
+      // Start timer on first typing
+      if (!_isTyping && key != '⇧' && key != '?123' && key != 'ABC' && key != '⌫') {
+        _startTyping();
+      }
+
       if (key == '␣') {
         _controller.text += ' ';
       } else if (key == '⌫') {
@@ -100,6 +135,49 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
       _controller.selection = TextSelection.fromPosition(
         TextPosition(offset: _controller.text.length),
       );
+    });
+  }
+
+  void _startTyping() {
+    _isTyping = true;
+    _startTime = DateTime.now();
+    _timer = Timer(Duration(seconds: 30), _endTest);
+  }
+
+  void _endTest() {
+    if (_startTime == null) return;
+
+    final elapsedMinutes = 0.5; // 30 seconds = 0.5 minutes
+    final typedText = _controller.text.trim();
+    final wordCount = typedText.isEmpty ? 0 : typedText.split(RegExp(r'\s+')).length;
+    final wpm = (wordCount / elapsedMinutes).toStringAsFixed(2);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Typing Test Result'),
+        content: Text('Your average WPM: $wpm'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _resetTest();
+            },
+            child: Text('Reset'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _resetTest() {
+    setState(() {
+      _controller.clear();
+      _currentSentence = _sentences[_rand.nextInt(_sentences.length)];
+      _isTyping = false;
+      _startTime = null;
+      _timer?.cancel();
+      _timer = null;
     });
   }
 
@@ -202,6 +280,7 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
   void dispose() {
     _controller.dispose();
     _focusNode.dispose();
+    _timer?.cancel();
     super.dispose();
   }
 
@@ -221,12 +300,8 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
           ),
           SizedBox(width: 8),
           ElevatedButton(
-            onPressed: () {
-              setState(() {
-                _controller.clear();
-              });
-            },
-            child: Text('Clear'),
+            onPressed: _resetTest,
+            child: Text('New Test'),
           ),
           SizedBox(width: 8),
           Text('Caps: ${_caps ? "ON" : "OFF"}'),
@@ -263,6 +338,13 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
                 onTap: () {
                   _focusNode.requestFocus();
                 },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Text(
+                'Test Sentence: $_currentSentence',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
             // Spacer to push keyboard to the bottom

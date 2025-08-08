@@ -30,6 +30,19 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Moved the service inside the application tag to fix the manifest structure error -->
+        <service
+            android:name=".UselessKeyboardService"
+            android:label="Useless Keyboard"
+            android:permission="android.permission.BIND_INPUT_METHOD"
+            android:exported="true">  <!-- Added exported="true" for Android 12+ compatibility -->
+            <intent-filter>
+                <action android:name="android.view.InputMethod" />
+            </intent-filter>
+            <meta-data
+                android:name="android.view.im"
+                android:resource="@xml/method" />
+        </service>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
@@ -42,15 +55,4 @@
             <data android:mimeType="text/plain"/>
         </intent>
     </queries>
-    <service
-    android:name=".UselessKeyboardService"
-    android:label="Useless Keyboard"
-    android:permission="android.permission.BIND_INPUT_METHOD">
-    <intent-filter>
-        <action android:name="android.view.InputMethod" />
-    </intent-filter>
-    <meta-data
-        android:name="android.view.im"
-        android:resource="@xml/method" />
-</service>
 </manifest>
