@@ -193,13 +193,13 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
             // Display different image based on completion status
             Image.asset(
               imagePath,
-              width: 100,
-              height: 100,
+              width: 200, // Increased size
+              height: 200, // Increased size
               errorBuilder: (context, error, stackTrace) => Container(
-                width: 100,
-                height: 100,
+                width: 200,
+                height: 200,
                 color: Colors.grey, // Fallback placeholder
-                child: Icon(Icons.image, size: 50),
+                child: Icon(Icons.image, size: 100),
               ),
             ),
             SizedBox(height: 10),
