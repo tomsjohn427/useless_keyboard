@@ -166,7 +166,7 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
     final typedText = _controller.text.trim().toLowerCase();
     final targetText = _currentSentence.trim().toLowerCase();
     if (typedText == targetText) {
-      _showPopup('valya karyam aay poy');
+      _showPopup('COMPLETED');
     }
   }
 
@@ -175,7 +175,7 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
     final typedText = _controller.text.trim().toLowerCase();
     final targetText = _currentSentence.trim().toLowerCase();
     if (typedText != targetText) {
-      _showPopup('valla panikkum poda');
+      _showPopup('INCOMPLETE');
     }
   }
 
@@ -203,7 +203,7 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
               ),
             ),
             SizedBox(height: 10),
-            Text('You have failed the test.'),
+            Text('You $message the test.'),
           ],
         ),
         actions: [
@@ -384,7 +384,7 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
                 readOnly: true, // prevent system keyboard
                 maxLines: 6,
                 decoration: InputDecoration(
-                  hintText: 'onnu type cheyth nokku',
+                  hintText: 'onnu type cheyth nokk',
                   border: OutlineInputBorder(),
                 ),
                 onTap: () {
@@ -403,7 +403,7 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
               padding: const EdgeInsets.all(12.0),
               child: Text(
                 'Time Remaining: $_remainingSeconds seconds',
-                style: TextStyle(fontSize: 25, color: Colors.red),
+                style: TextStyle(fontSize: 16, color: Colors.red),
               ),
             ),
             // Spacer to push keyboard to the bottom
