@@ -11,7 +11,7 @@ class ChaoticKeyboardApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Keyboard of Chaos',
+      title: 'Nee Kore Ondakkum',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
@@ -368,7 +368,7 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Keyboard of Chaos'),
+        title: Text('Nee Kore Ondakkum '),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -384,7 +384,7 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
                 readOnly: true, // prevent system keyboard
                 maxLines: 6,
                 decoration: InputDecoration(
-                  hintText: 'Type here using the chaotic keyboard below...',
+                  hintText: 'onnu type cheyth nokku',
                   border: OutlineInputBorder(),
                 ),
                 onTap: () {
@@ -403,7 +403,7 @@ class _ChaoticKeyboardDemoState extends State<ChaoticKeyboardDemo> {
               padding: const EdgeInsets.all(12.0),
               child: Text(
                 'Time Remaining: $_remainingSeconds seconds',
-                style: TextStyle(fontSize: 16, color: Colors.red),
+                style: TextStyle(fontSize: 25, color: Colors.red),
               ),
             ),
             // Spacer to push keyboard to the bottom
