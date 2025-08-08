@@ -45,6 +45,10 @@ install flutter sdk on your device
 flutter pub get
 flutter run
 
+FOR APK FILE:
+flutter build apk --release
+the terminal will show the apk location, install the apk file
+
 # Run
 flutter run
 
@@ -97,6 +101,7 @@ Android phone/Laptops
 ### Project Demo
 # Video
 https://drive.google.com/drive/folders/18Ni6zblJbgSYTcFuI0glSD5D4pZrkZh-?usp=share_link
+APK FILE IS ALSO HERE.
 This video shows the basic running of the application on a computer.
 
 # Additional Demos
